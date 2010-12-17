@@ -1,6 +1,6 @@
-aws_automate is a Twill (twill.idyll.org) module that allows the user to manage
-Amazon AWS instances (start-up, shutdown) without needing to type in their
-security credentials every time
+Aws Twill Module is a Twill (twill.idyll.org) module that allows the user to
+manage Amazon AWS instances (start-up, shutdown) without needing to type in
+their security credentials every time
 
 To use this package, you must have twill and boto installed
 
