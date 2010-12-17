@@ -23,7 +23,7 @@ __all__ = ['loadsettings',
            'showimages',
            'startinstance',
            'stopinstance',
-           'stopallinstances',
+           'stopinstances',
            'showinstances'
            ]
 
@@ -101,19 +101,22 @@ def showimages():
     for image in images:
         _print_image(settings.get_image(image))
 
-def startinstance(username, imagename, instance_type='m1.large'):
+def startinstance(imagename, username=None, instance_type='m1.large'):
     """
-    Starts an AWS instance from an image using a certain user's credentials
+    Starts an AWS instance from an image
     """
-    if not settings.get_user(username):
-        raise SystemExit("Invalid username '%s'" % username)
     if not settings.get_image(imagename):
         raise SystemExit("Invalid imagename '%s'" % imagename)
+
+    username, conn = _getbotoconn(username)
+
+    print "starting an instance from the %s image under the %s account of " \
+        "type %s" % \
+        (imagename, username, instance_type)
 
     username, accesskey, secretkey, pkname = settings.get_user(username)
     imagename, imageid = settings.get_image(imagename)
 
-    conn = EC2Connection(accesskey, secretkey)
     image = conn.get_image(imageid)
     reservation = None
     if pkname:
@@ -139,7 +142,9 @@ def showinstances(username=None):
     """
     Prints information about all instances
     """
-    conn = _getbotoconn(username)
+    username, conn = _getbotoconn(username)
+
+    print "all instances running under the %s account" % username
 
     reservations = conn.get_all_instances()
     for reservation in reservations:
@@ -149,7 +154,9 @@ def stopinstance(instanceid, username=None):
     """
     Stops a running AWS instance.
     """
-    conn = _getbotoconn(username)
+    username, conn = _getbotoconn(username)
+    print "stopping instance %s running under the %s account" % (instanceid,
+                                                                 username)
 
     running_instances = _getrunninginstances(conn)
 
@@ -159,11 +166,12 @@ def stopinstance(instanceid, username=None):
     else:
         print "not instance %s found" % instanceid
 
-def stopallinstances(username=None):
+def stopinstances(username=None):
     """
     Stops all running instances
     """
-    conn = _getbotoconn(username)
+    username, conn = _getbotoconn(username)
+    print "stopping instances running under the %s account" % username
 
     running_instances = _getrunninginstances(conn)
     for instid, instance in running_instances.iteritems():
@@ -217,7 +225,10 @@ def _getbotoconn(username):
     username and then uses those proper AWS credentials to create and return a
     boto connection object. If username is None, the first user stored in the
     settings is loaded. If there are no users stored in the settings, and/or
-    the username given is invalid, a ValueError is raised
+    the username given is invalid, a ValueError is raised. The return value is
+    a tuple containing the username used to create the connection object and
+    the connection object like so:
+    (username, connection_object)
     """
     user_settings = None
 
@@ -236,7 +247,7 @@ def _getbotoconn(username):
 
     username, accesskey, secretkey, pkname = user_settings
     conn = EC2Connection(accesskey, secretkey)
-    return conn
+    return (username, conn)
 
 def _getrunninginstances(conn):
     """

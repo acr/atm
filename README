@@ -1,3 +1,59 @@
 aws_automate is a Twill (twill.idyll.org) module that allows the user to manage
-Amazon AWS instances (startup, shutdown) without needing to type in their
+Amazon AWS instances (start-up, shutdown) without needing to type in their
 security credentials every time
+
+To use this package, you must have twill and boto installed
+
+quick-n-dirty tutorial
+ - lines starting with '>> ' define commands executed in the twill prompt
+ - lines starting with '$ ' define commands executed in a terminal
+
+Start twill and load the extension:
+$ twill-sh
+>> extend_with atm.twillm
+
+Add new user credentials:
+>> adduser me myAWSAccessKeyID myAWSSecretKey myAWSPrivateKey
+
+This associates you accesskeyid, secretkey and your privatekey with the username
+'me'. The username can be anything you want since it has nothing to do with
+Amazon's services, though you should make it short for your own sake.
+
+Add an image:
+>> addimage myimage ami-a0c83ec9
+
+This associates the image id 'ami-a0c83ec9' with the easier-to-remember string
+'myimage'. Once again, like the user name, the image name has nothing to do
+with Amazon and should be short so it is easy to remember.
+
+Save these settings to a file:
+>> savesettings mysettings
+
+This saves the user and image information you entered to the file 'mysettings'.
+If you want to load previously-saved settings from a file:
+>> loadsettings mysettings
+
+Now, lets start up an instance:
+>> startinstance myimage me m1.xlarge
+
+That command will fire up an m1.xlarge image. The instance type parameter is
+optional and, if left out, defaults to 'm1.large'. After the instance is started,
+its public DNS name is printed out below.
+
+To get a listing of currently running instances:
+>> showinstances
+
+To stop an instance by specifying its ID:
+>> stopinstance i-06e9ed6b
+
+To stop all instances:
+>> stopinstances
+
+Which prints out each image ID as it is stopped
+
+More Information:
+ - All commands dealing with instances (startinstance, stopinstance,
+   stopinstances, showinstances) take an optional 'username' parameter. This
+   parameter defines the user credentials to execute the command under. If left
+   unspecified, the command is executed using the first credentials stored in
+   the container.
