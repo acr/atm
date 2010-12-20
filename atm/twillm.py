@@ -11,8 +11,7 @@ import time
 import sys
 
 # export:
-__all__ = ['loadsettings',
-           'savesettings',
+__all__ = ['use_aws_creds',
            'adduser',
            'deluser',
            'showuser',
@@ -30,20 +29,6 @@ __all__ = ['loadsettings',
 CONFIG_FILE = '.atmconfig'
 auth_user = None
 settings = awssettings.AwsAccount(CONFIG_FILE)
-
-# [AN] this is depreciated
-def loadsettings(filename):
-    """
-    Loads settings from a filename
-    """
-    settings.load_settings(filename)
-
-# [AN] this is depreciated
-def savesettings(filename):
-    """
-    Saves the settings to a filename
-    """
-    settings.save_settings(filename)
 
 def use_aws_creds(username):
     """

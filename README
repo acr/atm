@@ -2,7 +2,8 @@ Aws Twill Module is a Twill (twill.idyll.org) module that allows the user to
 manage Amazon AWS instances (start-up, shutdown) without needing to type in
 their security credentials every time
 
-To use this package, you must have twill and boto installed
+To use this package, you must have twill and boto installed. If you want to run
+the nosetests, you'll also need python-nose installed
 
 quick-n-dirty tutorial
  - lines starting with '>> ' define commands executed in the twill prompt
@@ -26,19 +27,15 @@ This associates the image id 'ami-a0c83ec9' with the easier-to-remember string
 'myimage'. Once again, like the user name, the image name has nothing to do
 with Amazon and should be short so it is easy to remember.
 
-Save these settings to a file:
->> savesettings mysettings
-
-This saves the user and image information you entered to the file 'mysettings'.
-If you want to load previously-saved settings from a file:
->> loadsettings mysettings
+Tell atm to use the credentials you just entered:
+>> use_aws_creds me
 
 Now, lets start up an instance:
 >> startinstance myimage me m1.xlarge
 
 That command will fire up an m1.xlarge image. The instance type parameter is
-optional and, if left out, defaults to 'm1.large'. After the instance is started,
-its public DNS name is printed out below.
+optional and, if left out, defaults to 'm1.large'. After the instance is
+started, its public DNS name is printed out below.
 
 To get a listing of currently running instances:
 >> showinstances
@@ -52,8 +49,7 @@ To stop all instances:
 Which prints out each image ID as it is stopped
 
 More Information:
- - All commands dealing with instances (startinstance, stopinstance,
-   stopinstances, showinstances) take an optional 'username' parameter. This
-   parameter defines the user credentials to execute the command under. If left
-   unspecified, the command is executed using the first credentials stored in
-   the container.
+ - After entering user/image information, it is automatically saved to a
+   .atmconfig file that resides in the working directory. After creating this
+   file, the next time you use atm this fill is loaded and parsed so that you
+   do not have to enter that information a second time.
