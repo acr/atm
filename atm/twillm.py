@@ -27,7 +27,7 @@ __all__ = ['loadsettings',
            'showinstances'
            ]
 
-CONFIG_FILE = 'atmconfig'
+CONFIG_FILE = '.atmconfig'
 auth_user = None
 settings = awssettings.AwsAccount(CONFIG_FILE)
 

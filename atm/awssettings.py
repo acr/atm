@@ -5,17 +5,22 @@ A class that manages user credentials, image information and allowes pickeling
 and unpickeling that information to/from disk
 """
 
-import pickle
+import ConfigParser
 import os
 
 class AwsAccount(object):
     def __init__(self, filename):
-        self._USERKEY = 'AWSUSERS'
-        self._IMAGEKEY = 'AWSIMAGES'
-        self._ACCESSKEY = 'AK'
-        self._SECRETKEY = 'SK'
-        self._PKNAME = 'PKN'
+        self._USERKEY = 'awsuser'
+        self._IMAGEKEY = 'awsimage'
+        self._IMAGENAME = 'imagename'
+        self._IMAGEID = 'imageid'
+        self._USERNAME = 'username'
+        self._ACCESSKEY = 'accesskey'
+        self._SECRETKEY = 'secretkey'
+        self._PKNAME = 'privatekeyname'
         self._filename = filename
+        self._numusers = 0
+        self._numimgs = 0
 
         self._container = {
             self._USERKEY : {},
@@ -27,30 +32,67 @@ class AwsAccount(object):
 
     def load_settings(self):
         """
-        Loads settings from a pickled file
+        Loads settings from a config file. This method initializes the internal
+        dictionary of AWS information and initializes the 'num*' member
+        variables to what was loaded from the config file
         """
         if not os.path.isfile(self._filename):
             raise ValueError("'%s' is not a valid file" % self._filename)
-        f = open(self._filename, 'r')
-        self._container = pickle.load(f)
-        f.close()
+
+        self._numusers = 0
+        self._numimgs = 0
+
+        cf = ConfigParser.ConfigParser()
+        cf.read(self._filename)
+
+        for section in cf.sections():
+            cfile_setting = dict(cf.items(section))
+            if section.startswith(self._USERKEY):
+                self._add_user_to_container(
+                    cfile_setting[self._USERNAME],
+                    cfile_setting[self._ACCESSKEY],
+                    cfile_setting[self._SECRETKEY],
+                    cfile_setting[self._PKNAME]
+                    )
+                self._numusers += 1
+            elif section.startswith(self._IMAGEKEY):
+                self._add_image_to_container(
+                    cfile_setting[self._IMAGENAME],
+                    cfile_setting[self._IMAGEID]
+                    )
+                self._numimgs += 1
 
     def save_settings(self):
         """
-        Saves settings to a pickled file
+        Dumps the dictionary containing the AWS information into a config file
         """
+        cf = ConfigParser.ConfigParser()
+        # Save user information
+        for usernum, username in enumerate(self._container[self._USERKEY]):
+            section = '%s%d' % (self._USERKEY, usernum)
+            cf.add_section(section)
+            user_entry = self._container[self._USERKEY][username]
+            cf.set(section, self._USERNAME, username)
+            for option, value in user_entry.iteritems():
+                cf.set(section, option, value)
+
+        # Save image information
+        for imagenum, imagename in enumerate(self._container[self._IMAGEKEY]):
+            section = '%s%d' % (self._IMAGEKEY, imagenum)
+            cf.add_section(section)
+            imgid = self._container[self._IMAGEKEY][imagename]
+            cf.set(section, self._IMAGENAME, imagename)
+            cf.set(section, self._IMAGEID, imgid)
+
         f = open(self._filename, 'w')
-        pickle.dump(self._container, f)
+        cf.write(f)
         f.close()
 
     def add_user(self, username, accesskey, secretkey, pkname):
         """
         Adds a user entry to the container
         """
-        self._container[self._USERKEY][username] = {self._ACCESSKEY: accesskey,
-                                              self._SECRETKEY: secretkey,
-                                              self._PKNAME: pkname
-                                              }
+        self._add_user_to_container(username, accesskey, secretkey, pkname)
         self.save_settings()
 
     def del_user(self, username):
@@ -89,7 +131,7 @@ class AwsAccount(object):
         """
         Adds and image entry to the conainer
         """
-        self._container[self._IMAGEKEY][imagename] = imageid
+        self._add_image_to_container(imagename, imageid)
         self.save_settings()
 
     def del_image(self, imagename):
@@ -121,3 +163,19 @@ class AwsAccount(object):
         Returns the dictionary keys holding the image information
         """
         return self._container[self._IMAGEKEY].keys()
+
+    # Utility methods
+    def _add_user_to_container(self, username, accesskey, secretkey, pkname):
+	"""
+	Adds a user to the container
+	"""
+        self._container[self._USERKEY][username] = {self._ACCESSKEY: accesskey,
+                                                    self._SECRETKEY: secretkey,
+                                                    self._PKNAME: pkname
+                                                    }
+
+    def _add_image_to_container(self, imagename, imageid):
+        """
+        Adds an image to the container
+        """
+        self._container[self._IMAGEKEY][imagename] = imageid
