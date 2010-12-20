@@ -22,16 +22,16 @@ class AwsAccount(object):
             self._IMAGEKEY : {}
             }
 
-        if os.path.isfile(self.filename):
+        if os.path.isfile(self._filename):
             self.load_settings()
 
     def load_settings(self):
         """
         Loads settings from a pickled file
         """
-        if not os.path.isfile(self.filename):
-            raise ValueError("'%s' is not a valid file" % self.filename)
-        f = open(self.filename, 'r')
+        if not os.path.isfile(self._filename):
+            raise ValueError("'%s' is not a valid file" % self._filename)
+        f = open(self._filename, 'r')
         self._container = pickle.load(f)
         f.close()
 
@@ -39,7 +39,7 @@ class AwsAccount(object):
         """
         Saves settings to a pickled file
         """
-        f = open(self.filename, 'w')
+        f = open(self._filename, 'w')
         pickle.dump(self._container, f)
         f.close()
 

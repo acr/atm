@@ -167,11 +167,12 @@ def showinstances():
 
     print "all instances running under the %s account" % username
 
+    num_running = 0
     reservations = conn.get_all_instances()
     for reservation in reservations:
-        _print_reservation(reservation)
+        num_running += _print_reservation(reservation)
 
-    return len(reservations)
+    return num_running
 
 def stopinstance(instanceid):
     """
@@ -228,7 +229,8 @@ def _print_reservation(reservation):
     """
     Prints information on an AWS reservation. Only running instances are
     printed, all others are ignored
-    """
+ """
+    num_running = 0
     for inst in reservation.instances:
         if inst.state != u'running':
             continue
@@ -245,6 +247,9 @@ def _print_reservation(reservation):
         print "key_name:     %s" % inst.key_name
         print "launch time:  %s" % inst.launch_time
         print ""
+        num_running += 1
+
+    return num_running
 
 def _getbotoconn(username):
     """
