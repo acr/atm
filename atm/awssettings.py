@@ -9,36 +9,37 @@ import pickle
 import os
 
 class AwsAccount(object):
-    def __init__(self, filename=None):
+    def __init__(self, filename):
         self._USERKEY = 'AWSUSERS'
         self._IMAGEKEY = 'AWSIMAGES'
         self._ACCESSKEY = 'AK'
         self._SECRETKEY = 'SK'
         self._PKNAME = 'PKN'
+        self._filename = filename
 
         self._container = {
             self._USERKEY : {},
             self._IMAGEKEY : {}
             }
 
-        if filename:
-            self.load_settings(filename)
+        if os.path.isfile(self.filename):
+            self.load_settings()
 
-    def load_settings(self, filename):
+    def load_settings(self):
         """
         Loads settings from a pickled file
         """
-        if not os.path.isfile(filename):
-            raise ValueError("'%s' is not a valid file" % filename)
-        f = open(filename, 'r')
+        if not os.path.isfile(self.filename):
+            raise ValueError("'%s' is not a valid file" % self.filename)
+        f = open(self.filename, 'r')
         self._container = pickle.load(f)
         f.close()
 
-    def save_settings(self, filename):
+    def save_settings(self):
         """
         Saves settings to a pickled file
         """
-        f = open(filename, 'w')
+        f = open(self.filename, 'w')
         pickle.dump(self._container, f)
         f.close()
 
@@ -50,6 +51,7 @@ class AwsAccount(object):
                                               self._SECRETKEY: secretkey,
                                               self._PKNAME: pkname
                                               }
+        self.save_settings()
 
     def del_user(self, username):
         """
@@ -57,6 +59,7 @@ class AwsAccount(object):
         """
         try:
             self._container[self._USERKEY].pop(username)
+            self.save_settings()
         except KeyError:
             pass
 
@@ -87,6 +90,7 @@ class AwsAccount(object):
         Adds and image entry to the conainer
         """
         self._container[self._IMAGEKEY][imagename] = imageid
+        self.save_settings()
 
     def del_image(self, imagename):
         """
@@ -94,6 +98,7 @@ class AwsAccount(object):
         """
         try:
             self._container[self._IMAGEKEY].pop(imagename)
+            self.save_settings()
         except KeyError:
             pass
 

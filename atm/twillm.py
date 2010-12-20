@@ -27,19 +27,37 @@ __all__ = ['loadsettings',
            'showinstances'
            ]
 
-settings = awssettings.AwsAccount()
+CONFIG_FILE = 'atmconfig'
+auth_user = None
+settings = awssettings.AwsAccount(CONFIG_FILE)
 
+# [AN] this is depreciated
 def loadsettings(filename):
     """
     Loads settings from a filename
     """
     settings.load_settings(filename)
 
+# [AN] this is depreciated
 def savesettings(filename):
     """
     Saves the settings to a filename
     """
     settings.save_settings(filename)
+
+def use_aws_creds(username):
+    """
+    Use the given user's credentials in future calls for controlling AWS
+    """
+    rv = False
+    if settings.get_user(username):
+        auth_user = username
+        print "using credentials from '%s'" % username
+        rv = True
+    else:
+        print "no user '%s'" % username
+
+    return rv
 
 def adduser(username, accesskey, secretkey, pkname=None):
     """
@@ -52,6 +70,8 @@ def deluser(username):
     Deletes a user and their settings
     """
     settings.del_user(username)
+    if username == auth_user:
+        auth_user = None
 
 def showuser(username):
     """
@@ -101,14 +121,14 @@ def showimages():
     for image in images:
         _print_image(settings.get_image(image))
 
-def startinstance(imagename, username=None, instance_type='m1.large'):
+def startinstance(imagename, instance_type='m1.large'):
     """
     Starts an AWS instance from an image
     """
     if not settings.get_image(imagename):
         raise SystemExit("Invalid imagename '%s'" % imagename)
 
-    username, conn = _getbotoconn(username)
+    username, conn = _getbotoconn(auth_user)
 
     print "starting an instance from the %s image under the %s account of " \
         "type %s" % \
@@ -138,11 +158,12 @@ def startinstance(imagename, username=None, instance_type='m1.large'):
     print "Instance started"
     print "DNS name: %s" % instance.dns_name
 
-def showinstances(username=None):
+def showinstances():
     """
-    Prints information about all instances
+    Prints information about all instances and returns the number of running
+    instances
     """
-    username, conn = _getbotoconn(username)
+    username, conn = _getbotoconn(auth_user)
 
     print "all instances running under the %s account" % username
 
@@ -150,27 +171,33 @@ def showinstances(username=None):
     for reservation in reservations:
         _print_reservation(reservation)
 
-def stopinstance(instanceid, username=None):
+    return len(reservations)
+
+def stopinstance(instanceid):
     """
-    Stops a running AWS instance.
+    Stops a running AWS instance. Returns the number of instances still running
     """
-    username, conn = _getbotoconn(username)
+    username, conn = _getbotoconn(auth_user)
     print "stopping instance %s running under the %s account" % (instanceid,
                                                                  username)
 
     running_instances = _getrunninginstances(conn)
 
+    rv = len(running_instances)
     if instanceid in running_instances:
         running_instances[instanceid].stop()
+        rv -= 1
         print "instance %s stopped" % instanceid
     else:
         print "not instance %s found" % instanceid
 
-def stopinstances(username=None):
+    return rv
+
+def stopinstances():
     """
     Stops all running instances
     """
-    username, conn = _getbotoconn(username)
+    username, conn = _getbotoconn(auth_user)
     print "stopping instances running under the %s account" % username
 
     running_instances = _getrunninginstances(conn)
@@ -263,3 +290,9 @@ def _getrunninginstances(conn):
                 running_instances[instance.id] = instance
 
     return running_instances
+
+def _load_creds(username):
+    """
+    Uses the given credentials for future calls to control AWS
+    """
+    
